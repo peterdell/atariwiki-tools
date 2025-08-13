@@ -2,7 +2,6 @@ package com.wudsn.productions.www.atariwiki;
 
 import java.io.PrintWriter;
 
-
 public class MarkupWriter {
 
 	private PrintWriter printWriter;
@@ -13,18 +12,15 @@ public class MarkupWriter {
 
 	private void write(String content) {
 		printWriter.write(content);
-		if (AtariWikiConverter.DEBUG) {
-			System.out.print(content);
-		}
 	}
 
 	private void writeln(String content) {
 		write(content + "\n");
 	}
 
-	public void writeElement(Element element) {
-		switch( element.getType()){
-			
+	public void writeElement(MarkupElement element) {
+		switch (element.getType()) {
+
 		case ROOT: {
 			return;
 		}
@@ -121,5 +117,16 @@ public class MarkupWriter {
 			return;
 		}
 		}
+	}
+
+	public void writeElementWithChildren(MarkupElement element) {
+		element.visit(new MarkupElementVisitor() {
+
+			@Override
+			public void visit(MarkupElement element, int level) {
+				MarkupWriter.this.writeElement(element);
+
+			}
+		});
 	}
 }
