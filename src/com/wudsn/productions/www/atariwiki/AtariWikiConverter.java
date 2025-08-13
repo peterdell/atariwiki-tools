@@ -2,10 +2,7 @@ package com.wudsn.productions.www.atariwiki;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -19,39 +16,26 @@ public class AtariWikiConverter {
 	}
 
 	private void runTextFile(File inputFile, File outputFile) {
-		Reader reader = null;
-		MarkupElement rootElement = null;
+		MarkupElement rootElement;
 		try {
-			reader = new java.io.FileReader(inputFile);
-			MarkupParser markupParser = new MarkupParser();
-			rootElement = markupParser.parse(reader);
-		} catch (java.io.IOException ex) {
+			rootElement = MarkupIO.read(inputFile);
+		} catch (IOException ex) {
 			ex.printStackTrace();
 			return;
-		} finally {
-
-			if (reader != null) {
-				try {
-					reader.close();
-				} catch (IOException e) {
-					// Ignore
-				}
-			}
 		}
 
-		PrintWriter printWriter;
 		try {
-			printWriter = new PrintWriter(outputFile);
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+
+			MarkupIO.write(rootElement, outputFile);
+
+		} catch (IOException ex) {
+			ex.printStackTrace();
 			return;
 		}
-		MarkupWriter markupWriter = new MarkupWriter(printWriter);
-		markupWriter.writeElementWithChildren(rootElement);
-		printWriter.close();
+
 	}
 
+	// JSP Wiki handling for Attachments
 	private void runAttachmentFolder(File inputFileAttachmentsFolder, File outputFileAttachmentsFolder) {
 		if (!inputFileAttachmentsFolder.exists() || !inputFileAttachmentsFolder.isDirectory()) {
 			return;
@@ -164,21 +148,14 @@ public class AtariWikiConverter {
 			}
 
 		}
+
 		File tocFile = new File(outputFolder, "TOC.md");
-		PrintWriter printWriter;
-		MarkupWriter tocWriter;
 		try {
-			printWriter = new PrintWriter(tocFile);
-			tocWriter = new MarkupWriter(printWriter);
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			MarkupIO.write(toc, tocFile);
+		} catch (IOException ex) {
+			ex.printStackTrace();
 			return;
 		}
-
-		tocWriter.writeElementWithChildren(toc);
-		printWriter.close();
-
 	}
 
 	public static void main(String[] args) {

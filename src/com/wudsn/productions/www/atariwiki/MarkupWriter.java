@@ -18,7 +18,7 @@ public class MarkupWriter {
 		write(content + "\n");
 	}
 
-	public void writeElement(MarkupElement element) {
+	private void writeElement(MarkupElement element) {
 		switch (element.getType()) {
 
 		case ROOT: {
