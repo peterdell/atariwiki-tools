@@ -47,32 +47,37 @@ public class MarkupParser {
 	}
 
 	protected void addLink(String link) {
-		// ![drawing](drawing.jpg)
+		// Target MD ![drawing](drawing.jpg)
 
 		String description = "";
 		String url = "";
 
-		if (link.startsWith("{Image")) {
-			int index = link.indexOf("src='") + 5;
-			url = link.substring(index);
-			index = url.indexOf("'");
-			url = url.substring(0, index);
-			addChildElement(MarkupElement.Type.IMAGE, description).setURL(url);
+		if (format == Format.JSP) {
 
-			return;
-		}
+			if (link.startsWith("{Image")) {
+				int index = link.indexOf("src='") + 5;
+				url = link.substring(index);
+				index = url.indexOf("'");
+				url = url.substring(0, index);
+				addChildElement(MarkupElement.Type.IMAGE, description).setURL(url);
 
-		int index = link.indexOf("|");
-		if (index < 0) {
-			description = "";
-			url = link;
+				return;
+			}
+
+			int index = link.indexOf("|");
+			if (index < 0) {
+				description = "";
+				url = link;
+			} else {
+				description = link.substring(0, index);
+				url = link.substring(index + 1);
+			}
+
+			if (!url.contains("://")) {
+				url = AtariWikiConverter.cleanFileName(url);
+			}
 		} else {
-			description = link.substring(0, index);
-			url = link.substring(index + 1);
-		}
 
-		if (!url.contains("://")) {
-			url = AtariWikiConverter.cleanFileName(url);
 		}
 		addChildElement(MarkupElement.Type.LINK, description).setURL(url);
 	}
@@ -84,6 +89,18 @@ public class MarkupParser {
 			String prefix = content.substring(i);
 			if (prefix.startsWith("[")) {
 				int endIndex = prefix.indexOf("]");
+				if (format == Format.MD) {
+					if (endIndex > 1) {
+						String description = prefix.substring(1, endIndex).trim();
+						String url = "";
+						int urlStartIndex = endIndex + 1;
+						if (prefix.charAt(urlStartIndex) == '(') {
+							int urlEndIndex = prefix.indexOf(")", endIndex);
+							url = prefix.substring(urlStartIndex+1, urlEndIndex);
+						}
+						Utilities.log(url);
+					}
+				}
 				if (endIndex > 1) {
 					String link = prefix.substring(1, endIndex).trim();
 					addChildElement(MarkupElement.Type.TEXT, builder.toString());
@@ -144,7 +161,6 @@ public class MarkupParser {
 			codeBlockStart = "```";
 			codeBlockEnd = "```";
 			separator = "---";
-			return;
 		}
 
 		String condensedLine = line.replace(" ", "");

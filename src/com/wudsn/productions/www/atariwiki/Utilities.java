@@ -34,10 +34,16 @@ public abstract class Utilities {
 		message = "INFO: " + message.formatted(args);
 		log(message);
 	}
+	
+	public static void logWarning(String message, Object... args) {
+		message = "WARNING: " + message.formatted(args);
+		System.err.println(message);
+	}
+
 
 	public static void logError(String message, Object... args) {
 		message = "ERROR: " + message.formatted(args);
-		log(message);
+		System.err.println(message);
 	}
 
 	public static void logException(Exception exception) {

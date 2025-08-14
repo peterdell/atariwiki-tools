@@ -2,6 +2,7 @@ package com.wudsn.productions.www.atariwiki.jsp;
 
 import static com.wudsn.productions.www.atariwiki.Utilities.log;
 import static com.wudsn.productions.www.atariwiki.Utilities.logException;
+import static com.wudsn.productions.www.atariwiki.Utilities.logWarning;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -179,6 +180,8 @@ public class AtariWikiConverter {
 		name = name.replace(",", "");
 		name = name.replace("[", "");
 		name = name.replace("]", "");
+		name = name.replace("(", "");
+		name = name.replace(")", "");
 		name = name.replace("ü", "ue");
 		name = name.replace("u\u0308", "ue");
 		name = name.replace("@", "at");
@@ -190,17 +193,16 @@ public class AtariWikiConverter {
 		name = name.replace("#", "");
 		int index = name.indexOf("/");
 		if (index >= 0) {
-			name = name.substring(index+1);
+			name = name.substring(index + 1);
 		}
 		for (int i = 0; i < name.length(); i++) {
 			char c = name.charAt(i);
 			if (Markup.FILE_NAME_CHARACTERS.indexOf(c) < 0) {
-				log("WARNING: Invalid character '" + c + "' at position " + i + " in '" + name + "'.");
+				logWarning("Invalid character '" + c + "' at position " + i + " in '" + name + "'.");
 			}
 		}
 		return name;
 	}
-
 
 	public static void main(String[] args) {
 		new AtariWikiConverter().run(args);

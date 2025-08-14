@@ -11,25 +11,57 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.wudsn.productions.www.atariwiki.Markup.Format;
+import com.wudsn.productions.www.atariwiki.MarkupElement.Type;
 
 public class AtariWikiChecker {
 
-	private static MarkupElement readFile(File inputFileFolder) {
+	private FileFilter folderFilter;
+
+	public AtariWikiChecker() {
+		folderFilter = new FileFilter() {
+
+			@Override
+			public boolean accept(File file) {
+
+				if (!file.isDirectory()) {
+					return false;
+				}
+				if (file.getName().equals(".git")) {
+					return false;
+				}
+				if (file.getName().equals(Markup.ATTACHMENTS)) {
+					return false;
+				}
+
+//				if (filterPattern.isEmpty() || file.getName().indexOf(filterPattern) >= 0) {
+//					return true;
+//				}
+
+				return true;
+
+			};
+		};
+
+	}
+
+	private static MarkupElement readFile(File inputFile) {
 		MarkupElement rootElement;
 		try {
-			rootElement = MarkupIO.read(new File(inputFileFolder, "index.md"), Format.MD);
+			rootElement = MarkupIO.read(inputFile, Format.MD);
 
 		} catch (IOException ex) {
 			logException(ex);
 			return null;
 		}
 
-		File[] folders = new File(inputFileFolder, "attachments").listFiles();
-		for (File folder : folders) {
-			if (folder.isFile()) {
-				String fileName = folder.getName();
-				fileName = fileName.substring(0, fileName.length() - 4);
-				rootElement.addAttachment(fileName);
+		File[] folders = new File(inputFile.getParentFile(), Markup.ATTACHMENTS).listFiles();
+		if (folders != null) {
+			for (File folder : folders) {
+				if (folder.isFile()) {
+					String fileName = folder.getName();
+					fileName = fileName.substring(0, fileName.length() - 4);
+					rootElement.addAttachment(fileName);
+				}
 			}
 		}
 
@@ -37,55 +69,65 @@ public class AtariWikiChecker {
 
 	}
 
-	public void run(String[] args) {
-
-		File inputFolder = new File("C:\\jac\\system\\WWW\\Programming\\Repositories\\atariwiki");
-
-		final String filterPattern = ""; // "EASMD"; // "Teil10";
-		FileFilter folderFilter = new FileFilter() {
-
-			@Override
-			public boolean accept(File file) {
-				if (file.getName().equals(".git")) {
-					return false;
-				}
-				if (!file.isDirectory()) {
-					return false;
-				}
-
-				if (filterPattern.isEmpty() || file.getName().indexOf(filterPattern) >= 0) {
-					return true;
-				}
-
-				return false;
-
-			};
-		};
-		if (!inputFolder.exists()) {
-			Utilities.logError("Input folder %s' does not exist.", inputFolder.getAbsolutePath());
-			return;
-		}
+	private void runFolder(File rootFolder, File inputFolder, List<MarkupElement> rootElements) {
 		File[] inputFileFolders = inputFolder.listFiles(folderFilter);
-		List<MarkupElement> rootElements = new ArrayList<MarkupElement>();
 
 		for (File inputFileFolder : inputFileFolders) {
-			Utilities.logInfo("Processing '%s'.", inputFileFolder.getAbsolutePath());
-			MarkupElement rootElement = readFile(inputFileFolder);
-			if (rootElement != null) {
-				rootElements.add(rootElement);
+//			Utilities.logInfo("Processing '%s'.", inputFileFolder.getAbsolutePath());
+			File inputFile = new File(inputFileFolder, Markup.INDEX_MD);
+			if (inputFile.exists()) {
+				MarkupElement rootElement = readFile(inputFile);
+				if (rootElement != null) {
+					rootElement.setURL(inputFile.getAbsolutePath());
+					rootElements.add(rootElement);
+				}
 			}
+			runFolder(rootFolder, inputFileFolder, rootElements);
 
 		}
-
-//		checkConsistency(elements);
 	}
 
-//
-//	private void checkConsistency(List<MarkupElement> elements) {
-//		for (MarkupElement rootElement : elements) {
-//
-//		}
-//	};
+	private void checkConsistency(List<MarkupElement> elements) {
+		for (MarkupElement rootElement : elements) {
+			rootElement.visit(new MarkupElementVisitor() {
+
+				@Override
+				public void visit(MarkupElement element, int level) {
+					if (element.getType() == Type.ROOT) {
+						log("ROOT: " + element.getURL());
+
+					}
+
+					if (element.getType() == Type.LINK) {
+						StringBuilder builder = new StringBuilder();
+						for (MarkupElement childElement : element.getChildren()) {
+							builder.append(childElement.getContent());
+						}
+						log("LINK: " + element.getURL() + " with description '" + builder.toString() + "'");
+					}
+
+				}
+			});
+		}
+	};
+
+	public void run(String[] args) {
+
+		File rootFolder = new File("C:\\jac\\system\\WWW\\Programming\\Repositories\\atariwiki");
+
+//		final String filterPattern = ""; // "EASMD"; // "Teil10";
+		if (!rootFolder.exists()) {
+			Utilities.logError("Root folder %s' does not exist.", rootFolder.getAbsolutePath());
+			return;
+		}
+		Utilities.logInfo("Processing root folder '%s'.", rootFolder.getAbsolutePath());
+		List<MarkupElement> rootElements = new ArrayList<MarkupElement>();
+
+		runFolder(rootFolder, rootFolder, rootElements);
+
+		log("Checking consistency of " + rootElements.size() + " root elements.");
+		checkConsistency(rootElements);
+	}
 
 	public static void main(String[] args) {
 		new AtariWikiChecker().run(args);
