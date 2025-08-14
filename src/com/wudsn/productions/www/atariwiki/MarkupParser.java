@@ -5,13 +5,21 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.Stack;
 
+import com.wudsn.productions.www.atariwiki.Markup.Format;
+
 // Currently only parses JSPWiki format.
 
 public class MarkupParser {
 
+	private Markup.Format format;
+
 	private MarkupElement rootElement;
 	private Stack<MarkupElement> stack;
 	private MarkupElement currentElement;
+
+	public MarkupParser(Markup.Format format) {
+		this.format = format;
+	}
 
 	private void init() {
 		rootElement = new MarkupElement();
@@ -113,10 +121,21 @@ public class MarkupParser {
 	}
 
 	private void consumeLine(String line) {
+		String codeBlockStart = "";
+		String codeBlockEnd = "";
+		String separator = "";
+		if (format == Format.JSP) {
+			codeBlockStart = "{{{";
+			codeBlockEnd = "}}}";
+			separator = "---";
+		} else {
+			return;
+		}
+
 		String condensedLine = line.replace(" ", "");
 		if (currentElement.getType() == MarkupElement.Type.CODE) {
 
-			if (line.startsWith("}}}")) {
+			if (line.startsWith(codeBlockEnd)) {
 				popElement();
 				return;
 			} else {
@@ -131,7 +150,7 @@ public class MarkupParser {
 
 		// log(line);
 
-		if (condensedLine.startsWith("---")) {
+		if (condensedLine.startsWith(separator)) {
 			addChildElement(MarkupElement.Type.SEP, "---");
 			return;
 		}
@@ -163,7 +182,7 @@ public class MarkupParser {
 			return;
 		}
 
-		if (line.startsWith("{{{")) {
+		if (line.startsWith(codeBlockStart)) {
 			MarkupElement childElemment = addChildElement(MarkupElement.Type.CODE, "");
 			pushElement(childElemment);
 			return;

@@ -82,20 +82,25 @@ public class MarkupWriter {
 			if (description.isBlank()) {
 				description = url;
 			}
+			int index = url.lastIndexOf('.');
+			String extension = "";
+			if (index >= 0) {
+				extension = url.substring(index).toLowerCase();
+				if (extension.length() > 5) {
+					extension = "";
+				}
+			}
 			if (!url.contains("://")) {
 				// Make Wiki internal links relative file links
-				int index = url.lastIndexOf('.');
-				String extension = "";
-				if (index >= 0) {
-					extension = url.substring(index).toLowerCase();
-				}
+
 				// Assume known extensions are attachments
 				if (!extension.isEmpty()
-						&& ".atr,.bin,.car,.zip,.txt,.src,.asm,.rar,.pdf,.cas".indexOf(extension) >= 0) {
+						&& (".act,.atr,.atx,.arc,.bas,.bin,.car,.doc,.zip,.txt,.src,.asm,.rar,.rom,.pdf,.rtf,.pptx,.sys,.pro,.xex,.xlsx,.cas,"
+								+ ".djvu" + ".mp3,.flac," + ".flv,.mp4," + ".jpg,.png,.tif,").indexOf(extension) >= 0) {
 					url = "attachments/" + Utilities.encodeURL(url);
 				} else {
 					if (!extension.isEmpty()) {
-						Utilities.log("INFO: Unknown extension " + extension);
+						Utilities.log("INFO: Unknown extension " + extension + " in URL '" + url + "'.");
 					}
 					url = url + "/index.md";
 				}

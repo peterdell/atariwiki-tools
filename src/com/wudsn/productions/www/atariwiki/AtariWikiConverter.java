@@ -1,5 +1,8 @@
 package com.wudsn.productions.www.atariwiki;
 
+import static com.wudsn.productions.www.atariwiki.Utilities.log;
+import static com.wudsn.productions.www.atariwiki.Utilities.logException;
+
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -7,20 +10,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
+import com.wudsn.productions.www.atariwiki.Markup.Format;
+
 public class AtariWikiConverter {
 
-	public static final boolean DEBUG = false;
-
-	private static void log(String message) {
-		System.out.println(message);
-	}
-
-	private void runTextFile(File inputFile, File outputFile) {
+	private static void convertJSPTextFile(File inputFile, File outputFile) {
 		MarkupElement rootElement;
 		try {
-			rootElement = MarkupIO.read(inputFile);
+			rootElement = MarkupIO.read(inputFile, Format.JSP);
 		} catch (IOException ex) {
-			ex.printStackTrace();
+			logException(ex);
 			return;
 		}
 
@@ -29,14 +28,14 @@ public class AtariWikiConverter {
 			MarkupIO.write(rootElement, outputFile);
 
 		} catch (IOException ex) {
-			ex.printStackTrace();
+			logException(ex);
 			return;
 		}
 
 	}
 
 	// JSP Wiki handling for Attachments
-	private void runAttachmentFolder(File inputFileAttachmentsFolder, File outputFileAttachmentsFolder) {
+	private static void convertJSPAttachmentFolder(File inputFileAttachmentsFolder, File outputFileAttachmentsFolder) {
 		if (!inputFileAttachmentsFolder.exists() || !inputFileAttachmentsFolder.isDirectory()) {
 			return;
 		}
@@ -71,9 +70,8 @@ public class AtariWikiConverter {
 						outputFileAttachmentsFolder.mkdir();
 						Files.copy(new File(folder, versionName).toPath(), targetFilePath,
 								StandardCopyOption.REPLACE_EXISTING);
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+					} catch (IOException ex) {
+						logException(ex);
 					}
 				}
 			}
@@ -82,8 +80,8 @@ public class AtariWikiConverter {
 
 	private void runFile(File inputFile, File inputFileAttachmentsFolder, File outputFile,
 			File outputFileAttachmentsFolder) {
-		runTextFile(inputFile, outputFile);
-		runAttachmentFolder(inputFileAttachmentsFolder, outputFileAttachmentsFolder);
+		convertJSPTextFile(inputFile, outputFile);
+		convertJSPAttachmentFolder(inputFileAttachmentsFolder, outputFileAttachmentsFolder);
 	}
 
 	public void run(String[] args) {
@@ -93,7 +91,7 @@ public class AtariWikiConverter {
 		File outputFolder = new File(baseFolder, "atariwiki");
 		File contentFolder = new File(outputFolder, "content");
 
-		final String filterPattern = "EASMD"; // "Teil10";
+		final String filterPattern = ""; // "EASMD"; // "Teil10";
 		FileFilter filter = new FileFilter() {
 
 			@Override
@@ -153,7 +151,7 @@ public class AtariWikiConverter {
 		try {
 			MarkupIO.write(toc, tocFile);
 		} catch (IOException ex) {
-			ex.printStackTrace();
+			Utilities.logException(ex);
 			return;
 		}
 	}

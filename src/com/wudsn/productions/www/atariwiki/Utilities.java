@@ -2,6 +2,7 @@ package com.wudsn.productions.www.atariwiki;
 
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 public abstract class Utilities {
 
@@ -11,11 +12,11 @@ public abstract class Utilities {
 	public static boolean DEBUG = true;
 
 	public static String decodeURL(String url) {
-		return URLDecoder.decode(url);
+		return URLDecoder.decode(url, StandardCharsets.UTF_8);
 	}
 
 	public static String encodeURL(String path) {
-		return URLEncoder.encode(path);
+		return URLEncoder.encode(path, StandardCharsets.UTF_8);
 	}
 
 	public static void log(String message) {
@@ -38,4 +39,10 @@ public abstract class Utilities {
 		message = "ERROR: " + message.formatted(args);
 		log(message);
 	}
+
+	public static void logException(Exception exception) {
+		logError(exception.getMessage());
+		exception.printStackTrace();
+	}
+
 }
