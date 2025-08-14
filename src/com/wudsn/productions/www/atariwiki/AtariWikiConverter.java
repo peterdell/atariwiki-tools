@@ -9,18 +9,20 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.wudsn.productions.www.atariwiki.Markup.Format;
 
 public class AtariWikiConverter {
 
-	private static void convertJSPTextFile(File inputFile, File outputFile) {
+	private static MarkupElement convertJSPTextFile(File inputFile, File outputFile) {
 		MarkupElement rootElement;
 		try {
 			rootElement = MarkupIO.read(inputFile, Format.JSP);
 		} catch (IOException ex) {
 			logException(ex);
-			return;
+			return null;
 		}
 
 		try {
@@ -29,8 +31,10 @@ public class AtariWikiConverter {
 
 		} catch (IOException ex) {
 			logException(ex);
-			return;
+			return null;
 		}
+
+		return rootElement;
 
 	}
 
@@ -42,8 +46,9 @@ public class AtariWikiConverter {
 		File[] folders = inputFileAttachmentsFolder.listFiles();
 		for (File folder : folders) {
 			if (folder.isDirectory() || !folder.getName().endsWith("-dir")) {
-				String fileName = Utilities.decodeURL(folder.getName());
+				String fileName = folder.getName();
 				fileName = fileName.substring(0, fileName.length() - 4);
+				fileName = cleanFileName(fileName);
 				int extensionIndex = fileName.lastIndexOf('.');
 				String extension = fileName.substring(extensionIndex);
 				Utilities.logDebug("Reading attachments for '%s' from '%s'.", fileName, folder.getAbsolutePath());
@@ -78,16 +83,19 @@ public class AtariWikiConverter {
 		}
 	}
 
-	private void runFile(File inputFile, File inputFileAttachmentsFolder, File outputFile,
+	private MarkupElement convertJSPFile(File inputFile, File inputFileAttachmentsFolder, File outputFile,
 			File outputFileAttachmentsFolder) {
-		convertJSPTextFile(inputFile, outputFile);
+		MarkupElement rootElement = convertJSPTextFile(inputFile, outputFile);
 		convertJSPAttachmentFolder(inputFileAttachmentsFolder, outputFileAttachmentsFolder);
+		return rootElement;
 	}
 
 	public void run(String[] args) {
 
 		File baseFolder = new File("C:\\jac\\system\\WWW\\Programming\\Repositories");
-		File inputFolder = new File(baseFolder, "atariwiki.jsp\\jspwiki");
+		File inputFolder = new File(baseFolder, "atariwiki.jsp");
+		File textInputFolder = new File(inputFolder, "p/web/www-data/jspwiki");
+		File attachmentInputFolder = new File(inputFolder, "jspwiki/Attachments");
 		File outputFolder = new File(baseFolder, "atariwiki");
 		File contentFolder = new File(outputFolder, "content");
 
@@ -109,18 +117,19 @@ public class AtariWikiConverter {
 				return false;
 			};
 		};
-		if (!inputFolder.exists()) {
-			Utilities.logError("Input folder %s' does not exist.", inputFolder.getAbsolutePath());
+		if (!textInputFolder.exists()) {
+			Utilities.logError("Input folder %s' does not exist.", textInputFolder.getAbsolutePath());
 			return;
 		}
-		File[] inputFiles = inputFolder.listFiles(filter);
-
+		File[] inputFiles = textInputFolder.listFiles(filter);
+		List<MarkupElement> elements = new ArrayList<MarkupElement>();
 		MarkupElement toc = new MarkupElement();
 
 		for (File inputFile : inputFiles) {
 			String baseName = inputFile.getName();
 			baseName = baseName.substring(0, baseName.length() - 4);
-			File outputFileFolder = new File(contentFolder, baseName);
+			String cleanBaseName = cleanFileName(baseName);
+			File outputFileFolder = new File(contentFolder, cleanBaseName);
 			outputFileFolder.mkdir();
 			File outputFile = new File(outputFileFolder, "index.md");
 
@@ -128,33 +137,73 @@ public class AtariWikiConverter {
 
 			MarkupElement linkElement = ulElement.addChild(MarkupElement.Type.LINK);
 			linkElement.setContent(Utilities.decodeURL(baseName));
-			linkElement.setURL("content/" + baseName);
-			ulElement.getChildren().add(linkElement);
+			linkElement.setURL(cleanBaseName + "/index.md");
 
 			ulElement.addChild(MarkupElement.Type.BR);
 
-			Utilities.logInfo("Processing '%s'.", inputFile.getAbsolutePath());
-			File inputAttachmentsFolder = new File(inputFolder, "attachments");
+			Utilities.logInfo("Processing '%s' to '%s'.", inputFile.getAbsolutePath(), cleanBaseName);
 			File outputFileAttachmentsFolder = new File(outputFileFolder, "attachments");
 
-			File inputFileAttachmentsFolder = new File(inputAttachmentsFolder, baseName);
+			File inputFileAttachmentsFolder = new File(attachmentInputFolder, baseName + "-att");
 			try {
-				runFile(inputFile, inputFileAttachmentsFolder, outputFile, outputFileAttachmentsFolder);
+				MarkupElement element = convertJSPFile(inputFile, inputFileAttachmentsFolder, outputFile,
+						outputFileAttachmentsFolder);
+				if (element != null) {
+					element.setURL(inputFile.toPath().toString());
+					elements.add(element);
+				}
 			} catch (RuntimeException ex) {
 				linkElement.setContent(linkElement.getContent() + " ERROR: " + ex.getMessage());
 				ex.printStackTrace();
-			}
 
+			}
 		}
 
-		File tocFile = new File(outputFolder, "TOC.md");
+		File tocFile = new File(contentFolder, "TOC.md");
 		try {
 			MarkupIO.write(toc, tocFile);
 		} catch (IOException ex) {
 			Utilities.logException(ex);
 			return;
 		}
+
+		checkConsistency(elements);
 	}
+
+	public static String cleanFileName(String name) {
+		name = Utilities.decodeURL(name);
+		name = name.replace("&", "and");
+		name = name.replace(" ", "_");
+		name = name.replace(",", "");
+		name = name.replace("[", "");
+		name = name.replace("]", "");
+		name = name.replace("ü", "ue");
+		name = name.replace("u\u0308", "ue");
+		name = name.replace("@", "at");
+		name = name.replace("©", "c");
+		name = name.replace("<", "-");
+		name = name.replace(">", "-");
+		name = name.replace("=", "-");
+		name = name.replace("*", "-");
+		name = name.replace("#", "");
+		int index = name.indexOf("/");
+		if (index >= 0) {
+			name = name.substring(index+1);
+		}
+		for (int i = 0; i < name.length(); i++) {
+			char c = name.charAt(i);
+			if ("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!.+-_()$".indexOf(c) < 0) {
+				log("WARNING: Invalid character '" + c + "' at position " + i + " in '" + name + "'.");
+			}
+		}
+		return name;
+	}
+
+	private void checkConsistency(List<MarkupElement> elements) {
+		for (MarkupElement rootElement : elements) {
+
+		}
+	};
 
 	public static void main(String[] args) {
 		new AtariWikiConverter().run(args);

@@ -93,16 +93,20 @@ public class MarkupWriter {
 			if (!url.contains("://")) {
 				// Make Wiki internal links relative file links
 
-				// Assume known extensions are attachments
-				if (!extension.isEmpty()
-						&& (".act,.atr,.atx,.arc,.bas,.bin,.car,.doc,.zip,.txt,.src,.asm,.rar,.rom,.pdf,.rtf,.pptx,.sys,.pro,.xex,.xlsx,.cas,"
-								+ ".djvu" + ".mp3,.flac," + ".flv,.mp4," + ".jpg,.png,.tif,").indexOf(extension) >= 0) {
-					url = "attachments/" + Utilities.encodeURL(url);
-				} else {
-					if (!extension.isEmpty()) {
-						Utilities.log("INFO: Unknown extension " + extension + " in URL '" + url + "'.");
+				if (!url.endsWith("/index.md")) {
+
+					// Assume known extensions are attachments
+					if (!extension.isEmpty()
+							&& (".act,.atr,.atx,.arc,.bas,.bat,.bin,.car,.dmg,.doc,.7z,.zip,.txt,.html,.src,.asm,.rar,.rom,.pdf,.rtf,.pptx,.sys,.pro,.xex,.xlsx,.cas,"
+									+ ".djvu" + ".mp3,.flac,.wav," + ".flv,.mp4," + ".jpg,.png,.tif,")
+									.indexOf(extension) >= 0) {
+						url = "attachments/" + url;
+					} else {
+						if (!extension.isEmpty()) {
+							Utilities.log("INFO: Unknown extension " + extension + " in URL '" + url + "'.");
+						}
+						url = "../"+url + "/index.md";
 					}
-					url = url + "/index.md";
 				}
 			}
 			write("[" + description + "](" + url + ")");

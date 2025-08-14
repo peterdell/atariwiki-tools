@@ -69,6 +69,10 @@ public class MarkupParser {
 			description = link.substring(0, index);
 			url = link.substring(index + 1);
 		}
+		
+		if (!url.contains("://")) {
+			url=AtariWikiConverter.cleanFileName(url);
+		}
 		addChildElement(MarkupElement.Type.LINK, description).setURL(url);
 	}
 

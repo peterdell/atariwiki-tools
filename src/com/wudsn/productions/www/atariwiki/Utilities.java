@@ -9,7 +9,7 @@ public abstract class Utilities {
 	private Utilities() {
 	};
 
-	public static boolean DEBUG = true;
+	public static boolean DEBUG = false;
 
 	public static String decodeURL(String url) {
 		return URLDecoder.decode(url, StandardCharsets.UTF_8);
