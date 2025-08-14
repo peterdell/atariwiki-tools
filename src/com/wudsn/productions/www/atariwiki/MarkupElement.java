@@ -11,11 +11,33 @@ public class MarkupElement {
 
 	public static String NEW_LINE = "\n";
 
+	public static class Attachment {
+		private MarkupElement parent;
+		private String fileName;
+
+		Attachment(MarkupElement parent) {
+			this.parent = parent;
+		}
+
+		public MarkupElement getParent() {
+			return parent;
+		}
+
+		public void setfileName(String fileName) {
+			this.fileName = fileName;
+		}
+
+		public String getfileName() {
+			return fileName;
+		}
+	};
+
 	private MarkupElement parent;
 	private Type type;
 	private String content;
 	private String url;
 	private List<MarkupElement> children;
+	private List<Attachment> attachments;
 
 	public MarkupElement() {
 		this(null, Type.ROOT);
@@ -27,6 +49,7 @@ public class MarkupElement {
 		this.content = "";
 		this.url = "";
 		this.children = new ArrayList<MarkupElement>();
+		this.attachments = new ArrayList<Attachment>();
 	}
 
 	public MarkupElement getParent() {
@@ -61,6 +84,17 @@ public class MarkupElement {
 
 	public List<MarkupElement> getChildren() {
 		return children;
+	}
+
+	public Attachment addAttachment(String fileName) {
+		Attachment attachment = new Attachment(this);
+		attachment.setfileName(fileName);
+		attachments.add(attachment);
+		return attachment;
+	}
+
+	public List<Attachment> getAttachments() {
+		return attachments;
 	}
 
 	private void visit(MarkupElementVisitor elementVisitor, int level) {

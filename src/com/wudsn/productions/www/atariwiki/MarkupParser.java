@@ -6,6 +6,7 @@ import java.io.Reader;
 import java.util.Stack;
 
 import com.wudsn.productions.www.atariwiki.Markup.Format;
+import com.wudsn.productions.www.atariwiki.jsp.AtariWikiConverter;
 
 // Currently only parses JSPWiki format.
 
@@ -45,7 +46,7 @@ public class MarkupParser {
 		return element;
 	}
 
-	private void addLink(String link) {
+	protected void addLink(String link) {
 		// ![drawing](drawing.jpg)
 
 		String description = "";
@@ -69,9 +70,9 @@ public class MarkupParser {
 			description = link.substring(0, index);
 			url = link.substring(index + 1);
 		}
-		
+
 		if (!url.contains("://")) {
-			url=AtariWikiConverter.cleanFileName(url);
+			url = AtariWikiConverter.cleanFileName(url);
 		}
 		addChildElement(MarkupElement.Type.LINK, description).setURL(url);
 	}
@@ -104,14 +105,21 @@ public class MarkupParser {
 
 		addChildElement(type, content);
 
-		// Remove single trailing \\
-		content = content.trim();
-		if (content.endsWith("\\\\")) {
-			content = content.substring(0, content.length() - 2);
-		}
+		if (format == Format.JSP) {
+			// Remove single trailing \\
+			content = content.trim();
+			if (content.endsWith("\\\\")) {
+				content = content.substring(0, content.length() - 2);
+			}
 
-		String[] lines = content.split("\\\\");
-		for (String line : lines) {
+			String[] lines = content.split("\\\\");
+			for (String line : lines) {
+				if (!line.isBlank()) {
+					addChildElementWithFormat(line);
+				}
+			}
+		} else {
+			String line = content;
 			if (!line.isBlank()) {
 				addChildElementWithFormat(line);
 			}
@@ -133,6 +141,9 @@ public class MarkupParser {
 			codeBlockEnd = "}}}";
 			separator = "---";
 		} else {
+			codeBlockStart = "```";
+			codeBlockEnd = "```";
+			separator = "---";
 			return;
 		}
 
@@ -159,31 +170,58 @@ public class MarkupParser {
 			return;
 		}
 
-		if (line.startsWith("!!!")) {
-			addChildElementWithLines(MarkupElement.Type.H1, line.substring(3).trim());
-			return;
-		}
-		if (line.startsWith("!!")) {
-			addChildElementWithLines(MarkupElement.Type.H2, line.substring(2).trim());
-			return;
-		}
-		if (line.startsWith("!")) {
-			addChildElementWithLines(MarkupElement.Type.H3, line.substring(1).trim());
-			return;
-		}
+		if (format == Format.JSP) {
+			if (line.startsWith("!!!")) {
+				addChildElementWithLines(MarkupElement.Type.H1, line.substring(3).trim());
+				return;
+			}
+			if (line.startsWith("!!")) {
+				addChildElementWithLines(MarkupElement.Type.H2, line.substring(2).trim());
+				return;
+			}
+			if (line.startsWith("!")) {
+				addChildElementWithLines(MarkupElement.Type.H3, line.substring(1).trim());
+				return;
+			}
 
-		if (line.startsWith("* ")) {
-			addChildElementWithLines(MarkupElement.Type.UL, line.substring(2).trim());
-			return;
-		}
-		if (line.startsWith("# ")) {
-			addChildElementWithLines(MarkupElement.Type.OL, line.substring(2).trim());
-			return;
-		}
+			if (line.startsWith("* ")) {
+				addChildElementWithLines(MarkupElement.Type.UL, line.substring(2).trim());
+				return;
+			}
+			if (line.startsWith("# ")) {
+				addChildElementWithLines(MarkupElement.Type.OL, line.substring(2).trim());
+				return;
+			}
 
-		if (condensedLine.startsWith("[{TableOfContents}]")) {
-			addChildElement(MarkupElement.Type.TOC, "Table of Contents");
-			return;
+			if (condensedLine.startsWith("[{TableOfContents}]")) {
+				addChildElement(MarkupElement.Type.TOC, "Table of Contents");
+				return;
+			}
+
+		} else {
+
+			if (line.startsWith("# ")) {
+				addChildElementWithLines(MarkupElement.Type.H1, line.substring(3).trim());
+				return;
+			}
+			if (line.startsWith("## ")) {
+				addChildElementWithLines(MarkupElement.Type.H2, line.substring(2).trim());
+				return;
+			}
+			if (line.startsWith("### ")) {
+				addChildElementWithLines(MarkupElement.Type.H3, line.substring(1).trim());
+				return;
+			}
+
+			if (line.startsWith("- ")) {
+				addChildElementWithLines(MarkupElement.Type.UL, line.substring(2).trim());
+				return;
+			}
+			if (line.startsWith("1. ")) {
+				addChildElementWithLines(MarkupElement.Type.OL, line.substring(2).trim());
+				return;
+			}
+
 		}
 
 		if (line.startsWith(codeBlockStart)) {

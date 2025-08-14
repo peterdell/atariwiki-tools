@@ -1,4 +1,4 @@
-package com.wudsn.productions.www.atariwiki;
+package com.wudsn.productions.www.atariwiki.jsp;
 
 import static com.wudsn.productions.www.atariwiki.Utilities.log;
 import static com.wudsn.productions.www.atariwiki.Utilities.logException;
@@ -12,7 +12,11 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.wudsn.productions.www.atariwiki.Markup;
 import com.wudsn.productions.www.atariwiki.Markup.Format;
+import com.wudsn.productions.www.atariwiki.MarkupElement;
+import com.wudsn.productions.www.atariwiki.MarkupIO;
+import com.wudsn.productions.www.atariwiki.Utilities;
 
 public class AtariWikiConverter {
 
@@ -103,12 +107,12 @@ public class AtariWikiConverter {
 		FileFilter filter = new FileFilter() {
 
 			@Override
-			public boolean accept(File pathname) {
-				if (pathname.getName().toLowerCase().endsWith(".txt")) {
+			public boolean accept(File file) {
+				if (file.getName().toLowerCase().endsWith(".txt")) {
 					if (filterPattern.isEmpty()) {
 						return true;
 					} else {
-						if (pathname.getName().indexOf(filterPattern) >= 0) {
+						if (file.getName().indexOf(filterPattern) >= 0) {
 							return true;
 						}
 					}
@@ -166,8 +170,6 @@ public class AtariWikiConverter {
 			Utilities.logException(ex);
 			return;
 		}
-
-		checkConsistency(elements);
 	}
 
 	public static String cleanFileName(String name) {
@@ -192,18 +194,13 @@ public class AtariWikiConverter {
 		}
 		for (int i = 0; i < name.length(); i++) {
 			char c = name.charAt(i);
-			if ("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!.+-_()$".indexOf(c) < 0) {
+			if (Markup.FILE_NAME_CHARACTERS.indexOf(c) < 0) {
 				log("WARNING: Invalid character '" + c + "' at position " + i + " in '" + name + "'.");
 			}
 		}
 		return name;
 	}
 
-	private void checkConsistency(List<MarkupElement> elements) {
-		for (MarkupElement rootElement : elements) {
-
-		}
-	};
 
 	public static void main(String[] args) {
 		new AtariWikiConverter().run(args);
