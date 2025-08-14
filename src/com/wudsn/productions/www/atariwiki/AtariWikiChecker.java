@@ -6,7 +6,9 @@ import static com.wudsn.productions.www.atariwiki.Utilities.logException;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
-
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -87,6 +89,30 @@ public class AtariWikiChecker {
 		}
 	}
 
+	private void checkLink(MarkupElement element) throws IOException {
+		String url = element.getURL();
+		if (url.contains("://")) {
+			URL urlObject;
+			try {
+				urlObject = new URL(url);
+			} catch (MalformedURLException ex) {
+				throw new IOException("Malformed URL", ex);
+			}
+
+			Object content;
+			try {
+
+				content = urlObject.getContent();
+				if (content instanceof HttpURLConnection) {
+					HttpURLConnection urlConnection = (HttpURLConnection) content;
+					urlConnection.disconnect();
+				}
+			} catch (IOException ex) {
+				throw new IOException("Cannot read content from URL", ex);
+			}
+		}
+	}
+
 	private void checkConsistency(List<MarkupElement> elements) {
 		for (MarkupElement rootElement : elements) {
 			rootElement.visit(new MarkupElementVisitor() {
@@ -94,7 +120,6 @@ public class AtariWikiChecker {
 				@Override
 				public void visit(MarkupElement element, int level) {
 					if (element.getType() == Type.ROOT) {
-						log("ROOT: " + element.getURL());
 
 					}
 
@@ -103,10 +128,17 @@ public class AtariWikiChecker {
 						for (MarkupElement childElement : element.getChildren()) {
 							builder.append(childElement.getContent());
 						}
-						log("LINK: " + element.getURL() + " with description '" + builder.toString() + "'");
+						try {
+							checkLink(element);
+						} catch (IOException ex) {
+							log("ROOT: " + element.getRoot().getURL());
+							log("LINK: " + element.getURL() + " with description '" + element.getContent() + "'");
+							logException(ex);
+						}
 					}
 
 				}
+
 			});
 		}
 	};

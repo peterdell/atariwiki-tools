@@ -46,7 +46,11 @@ public class MarkupParser {
 		return element;
 	}
 
-	protected void addLink(String link) {
+	private void addLink(String description, String url) {
+		addChildElement(MarkupElement.Type.LINK, description).setURL(url);
+	}
+
+	protected void addJSPLink(String link) {
 		// Target MD ![drawing](drawing.jpg)
 
 		String description = "";
@@ -79,7 +83,7 @@ public class MarkupParser {
 		} else {
 
 		}
-		addChildElement(MarkupElement.Type.LINK, description).setURL(url);
+		addLink(description, url);
 	}
 
 	private void addChildElementWithFormat(String content) {
@@ -89,25 +93,28 @@ public class MarkupParser {
 			String prefix = content.substring(i);
 			if (prefix.startsWith("[")) {
 				int endIndex = prefix.indexOf("]");
-				if (format == Format.MD) {
-					if (endIndex > 1) {
+				if (endIndex > 1) {
+					if (format == Format.MD) {
 						String description = prefix.substring(1, endIndex).trim();
 						String url = "";
 						int urlStartIndex = endIndex + 1;
 						if (prefix.charAt(urlStartIndex) == '(') {
-							int urlEndIndex = prefix.indexOf(")", endIndex);
-							url = prefix.substring(urlStartIndex+1, urlEndIndex);
+							endIndex = prefix.indexOf(")", endIndex);
+							url = prefix.substring(urlStartIndex + 1, endIndex);
 						}
-						Utilities.log(url);
+//						Utilities.log(url);
+						addLink(description, url);
+					} else {
+						String link = prefix.substring(1, endIndex).trim();
+						addChildElement(MarkupElement.Type.TEXT, builder.toString());
+						builder.setLength(0);
+						addJSPLink(link);
 					}
-				}
-				if (endIndex > 1) {
-					String link = prefix.substring(1, endIndex).trim();
-					addChildElement(MarkupElement.Type.TEXT, builder.toString());
-					builder.setLength(0);
-					addLink(link);
 					i += endIndex;
+				} else {
+					builder.append(content.charAt(i));
 				}
+
 			} else {
 				builder.append(content.charAt(i));
 			}

@@ -21,6 +21,7 @@ public abstract class Utilities {
 
 	public static void log(String message) {
 		System.out.println(message);
+		System.out.flush();
 	}
 
 	public static void logDebug(String message, Object... args) {
@@ -38,16 +39,18 @@ public abstract class Utilities {
 	public static void logWarning(String message, Object... args) {
 		message = "WARNING: " + message.formatted(args);
 		System.err.println(message);
+		System.err.flush();
 	}
 
 
 	public static void logError(String message, Object... args) {
 		message = "ERROR: " + message.formatted(args);
 		System.err.println(message);
+		System.err.flush();
 	}
 
 	public static void logException(Exception exception) {
-		logError(exception.getMessage());
+		logError("%s", exception.getMessage());
 		exception.printStackTrace();
 	}
 

@@ -56,6 +56,15 @@ public class MarkupElement {
 		return parent;
 	}
 
+	public MarkupElement getRoot() {
+		MarkupElement result = this;
+
+		while (result.getParent() != null) {
+			result = result.getParent();
+		}
+		return result;
+	}
+
 	public Type getType() {
 		return type;
 	}
