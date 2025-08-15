@@ -7,10 +7,10 @@
     <property name="dir.workspace" value="C:/jac/system/Java/Programming/Workspaces/Productions"/>
     <property name="dir.jarfile" value="${dir.buildfile}/out"/>
     <target name="create_run_jar">
-        <jar destfile="${dir.jarfile}/AtariWikiConverter.jar">
+        <jar destfile="${dir.jarfile}/AtariWikiTool.jar">
             <manifest>
                 <attribute name="Main-Class" value="org.eclipse.jdt.internal.jarinjarloader.JarRsrcLoader"/>
-                <attribute name="Rsrc-Main-Class" value="com.wudsn.productions.www.atariwiki.jsp.AtariWikiConverter"/>
+                <attribute name="Rsrc-Main-Class" value="com.wudsn.productions.www.atariwiki.AtariWikiTool"/>
                 <attribute name="Class-Path" value="."/>
                 <attribute name="Rsrc-Class-Path" value="./"/>
             </manifest>

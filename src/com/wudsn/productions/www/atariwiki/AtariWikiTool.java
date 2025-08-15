@@ -3,6 +3,7 @@ package com.wudsn.productions.www.atariwiki;
 import static com.wudsn.productions.www.atariwiki.Utilities.*;
 
 import java.io.File;
+import java.io.IOException;
 
 import com.wudsn.productions.www.atariwiki.jsp.AtariWikiConverter;
 
@@ -25,6 +26,12 @@ public class AtariWikiTool {
 					baseFolderPath = arg;
 
 					baseFolder = new File(baseFolderPath);
+					try {
+						baseFolder = baseFolder.getCanonicalFile();
+					} catch (IOException ex) {
+						Utilities.logException(ex);
+						return;
+					}
 					if (!baseFolder.exists() || !baseFolder.isDirectory()) {
 						Utilities.logError("Base folder %s' does not exist.", baseFolder.getAbsolutePath());
 						return;
