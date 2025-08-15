@@ -91,7 +91,7 @@ public class MarkupParser {
 		StringBuilder builder = new StringBuilder();
 		for (int i = 0; i < content.length(); i++) {
 			String prefix = content.substring(i);
-			if (prefix.startsWith("[")) {
+			if (prefix.startsWith("~[") || prefix.startsWith("[")) {
 				int endIndex = prefix.indexOf("]");
 				if (endIndex > 1) {
 					if (format == Format.MD) {
@@ -106,10 +106,18 @@ public class MarkupParser {
 //						Utilities.log(url);
 						addLink(description, url);
 					} else {
-						String link = prefix.substring(1, endIndex).trim();
-						addChildElement(MarkupElement.Type.TEXT, builder.toString());
-						builder.setLength(0);
-						addJSPLink(link);
+
+						// Escaped?
+						if (prefix.startsWith("~")) {
+							String text = prefix.substring(2, endIndex);
+							builder.append("\\[").append(text).append("\\]");
+
+						} else {
+							String link = prefix.substring(1, endIndex).trim();
+							addChildElement(MarkupElement.Type.TEXT, builder.toString());
+							builder.setLength(0);
+							addJSPLink(link);
+						}
 					}
 					i += endIndex;
 				} else {
