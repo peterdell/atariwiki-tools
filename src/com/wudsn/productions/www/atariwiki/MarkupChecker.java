@@ -25,9 +25,18 @@ public class MarkupChecker {
 
 	private File rootFolder;
 	private Map<String, MarkupElement> rootElementsMap;
+	private long issueCount;
 
 	public MarkupChecker() {
 
+	}
+
+	private void logError(MarkupElement element, IOException ex) {
+		log("ISSUE: " + Long.toString(issueCount));
+		log("ROOT : " + element.getRoot().getURL());
+		log("LINK : " + element.getURL() + " with description '" + element.getContent() + "'");
+		logException(ex);
+		issueCount = issueCount + 1;
 	}
 
 //	private String readContent(HttpURLConnection connection) throws IOException {
@@ -122,7 +131,7 @@ public class MarkupChecker {
 		for (MarkupElement rootElement : elements) {
 			rootElementsMap.put(rootElement.getURL(), rootElement);
 		}
-
+		issueCount = 0;
 		for (MarkupElement rootElement : elements) {
 			rootElement.visit(new MarkupElementVisitor() {
 
@@ -140,9 +149,7 @@ public class MarkupChecker {
 						try {
 							checkLink(element);
 						} catch (IOException ex) {
-							log("ROOT: " + element.getRoot().getURL());
-							log("LINK: " + element.getURL() + " with description '" + element.getContent() + "'");
-							logException(ex);
+							logError(element, ex);
 						}
 					}
 
