@@ -1,7 +1,7 @@
 package com.wudsn.productions.www.atariwiki;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class MarkupElement {
 
@@ -37,7 +37,7 @@ public class MarkupElement {
 	private String content;
 	private String url;
 	private List<MarkupElement> children;
-	private List<Attachment> attachments;
+	private Map<String, Attachment> attachments;
 
 	public MarkupElement() {
 		this(null, Type.ROOT);
@@ -49,7 +49,7 @@ public class MarkupElement {
 		this.content = "";
 		this.url = "";
 		this.children = new ArrayList<MarkupElement>();
-		this.attachments = new ArrayList<Attachment>();
+		this.attachments = new TreeMap<String, Attachment>();
 	}
 
 	public MarkupElement getParent() {
@@ -98,12 +98,16 @@ public class MarkupElement {
 	public Attachment addAttachment(String fileName) {
 		Attachment attachment = new Attachment(this);
 		attachment.setfileName(fileName);
-		attachments.add(attachment);
+		attachments.put(fileName, attachment);
 		return attachment;
 	}
 
-	public List<Attachment> getAttachments() {
+	public Map<String, Attachment> getAttachments() {
 		return attachments;
+	}
+
+	public Attachment getAttachment(String fileName) {
+		return attachments.get(fileName);
 	}
 
 	private void visit(MarkupElementVisitor elementVisitor, int level) {

@@ -35,13 +35,12 @@ public abstract class Utilities {
 		message = "INFO: " + message.formatted(args);
 		log(message);
 	}
-	
+
 	public static void logWarning(String message, Object... args) {
 		message = "WARNING: " + message.formatted(args);
 		System.err.println(message);
 		System.err.flush();
 	}
-
 
 	public static void logError(String message, Object... args) {
 		message = "ERROR: " + message.formatted(args);
@@ -51,7 +50,13 @@ public abstract class Utilities {
 
 	public static void logException(Exception exception) {
 		logError("%s", exception.getMessage());
-		exception.printStackTrace();
+		Throwable cause = exception.getCause();
+		while (cause != null) {
+			logError("CAUSE: %s", cause.getMessage());
+
+			cause = cause.getCause();
+		}
+		// System.exit(1);
 	}
 
 }

@@ -21,28 +21,6 @@ import com.wudsn.productions.www.atariwiki.Utilities;
 
 public class AtariWikiConverter {
 
-	private static MarkupElement convertJSPTextFile(File inputFile, File outputFile) {
-		MarkupElement rootElement;
-		try {
-			rootElement = MarkupIO.read(inputFile, Format.JSP);
-		} catch (IOException ex) {
-			logException(ex);
-			return null;
-		}
-
-		try {
-
-			MarkupIO.write(rootElement, outputFile);
-
-		} catch (IOException ex) {
-			logException(ex);
-			return null;
-		}
-
-		return rootElement;
-
-	}
-
 	// JSP Wiki handling for Attachments
 	private static void convertJSPAttachmentFolder(File inputFileAttachmentsFolder, File outputFileAttachmentsFolder) {
 		if (!inputFileAttachmentsFolder.exists() || !inputFileAttachmentsFolder.isDirectory()) {
@@ -88,9 +66,27 @@ public class AtariWikiConverter {
 		}
 	}
 
-	private MarkupElement convertJSPFile(File inputFile, File inputFileAttachmentsFolder, File outputFile,
-			File outputFileAttachmentsFolder) {
-		MarkupElement rootElement = convertJSPTextFile(inputFile, outputFile);
+	private MarkupElement convertJSPFile(File inputFile, String readableName, File inputFileAttachmentsFolder,
+			File outputFile, File outputFileAttachmentsFolder) {
+		MarkupElement rootElement;
+		try {
+			rootElement = MarkupIO.read(inputFile, Format.JSP);
+			rootElement.setContent(readableName);
+			rootElement.setURL(inputFile.toPath().toString());
+		} catch (IOException ex) {
+			logException(ex);
+			return null;
+		}
+
+		try {
+
+			MarkupIO.write(rootElement, outputFile);
+
+		} catch (IOException ex) {
+			logException(ex);
+			return null;
+		}
+
 		convertJSPAttachmentFolder(inputFileAttachmentsFolder, outputFileAttachmentsFolder);
 		return rootElement;
 	}
@@ -134,6 +130,7 @@ public class AtariWikiConverter {
 			String baseName = inputFile.getName();
 			baseName = baseName.substring(0, baseName.length() - 4);
 			String cleanBaseName = cleanFileName(baseName);
+			String readableName = Utilities.decodeURL(baseName);
 			File outputFileFolder = new File(contentFolder, cleanBaseName);
 			outputFileFolder.mkdir();
 			File outputFile = new File(outputFileFolder, "index.md");
@@ -141,20 +138,19 @@ public class AtariWikiConverter {
 			MarkupElement ulElement = toc.addChild(MarkupElement.Type.UL);
 
 			MarkupElement linkElement = ulElement.addChild(MarkupElement.Type.LINK);
-			linkElement.setContent(Utilities.decodeURL(baseName));
+			linkElement.setContent(readableName);
 			linkElement.setURL(cleanBaseName + "/index.md");
 
 			ulElement.addChild(MarkupElement.Type.BR);
 
-			Utilities.logInfo("Processing '%s' to '%s'.", inputFile.getAbsolutePath(), cleanBaseName);
+			Utilities.logInfo("Converting '%s' to '%s'.", inputFile.getAbsolutePath(), cleanBaseName);
 			File outputFileAttachmentsFolder = new File(outputFileFolder, "attachments");
 
 			File inputFileAttachmentsFolder = new File(attachmentInputFolder, baseName + "-att");
 			try {
-				MarkupElement element = convertJSPFile(inputFile, inputFileAttachmentsFolder, outputFile,
+				MarkupElement element = convertJSPFile(inputFile, readableName, inputFileAttachmentsFolder, outputFile,
 						outputFileAttachmentsFolder);
 				if (element != null) {
-					element.setURL(inputFile.toPath().toString());
 					elements.add(element);
 				}
 			} catch (RuntimeException ex) {

@@ -22,6 +22,9 @@ public class MarkupWriter {
 		switch (element.getType()) {
 
 		case ROOT: {
+			writeln("---");
+			writeln("title: "+element.getContent());
+			writeln("---");
 			return;
 		}
 		case SEP: {

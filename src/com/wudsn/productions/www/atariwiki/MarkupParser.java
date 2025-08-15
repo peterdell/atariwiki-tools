@@ -98,7 +98,8 @@ public class MarkupParser {
 						String description = prefix.substring(1, endIndex).trim();
 						String url = "";
 						int urlStartIndex = endIndex + 1;
-						if (prefix.charAt(urlStartIndex) == '(') {
+						if (urlStartIndex >= 0 && urlStartIndex < prefix.length()
+								&& prefix.charAt(urlStartIndex) == '(') {
 							endIndex = prefix.indexOf(")", endIndex);
 							url = prefix.substring(urlStartIndex + 1, endIndex);
 						}
