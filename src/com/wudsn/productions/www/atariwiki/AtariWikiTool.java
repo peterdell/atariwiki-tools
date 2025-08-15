@@ -19,7 +19,7 @@ public class AtariWikiTool {
 			if (arg.equals("--convert")) {
 				convert = true;
 			} else if (arg.equals("--check")) {
-				convert = true;
+				check = true;
 			} else {
 				if (baseFolder == null) {
 					baseFolderPath = arg;
@@ -50,14 +50,19 @@ public class AtariWikiTool {
 
 		logInfo("Base Folder: %s", baseFolderPath);
 		logInfo("Convert: %b", convert);
-		logInfo("Check: %b", convert);
-		
+		logInfo("Check: %b", check);
+
 		if (convert) {
+			log("Starting conversion.");
+
 			new AtariWikiConverter().run(baseFolder);
-			log("Conversion Done.");
+			log("Conversion completed.");
 		}
 		if (check) {
+			log("Starting check.");
 			new AtariWikiChecker().run(baseFolder);
+			log("Check completed.");
+
 		}
 
 	}
