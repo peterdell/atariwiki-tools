@@ -17,6 +17,7 @@ public class MarkupParser {
 	private MarkupElement rootElement;
 	private Stack<MarkupElement> stack;
 	private MarkupElement currentElement;
+	private int lineNumber;
 
 	public MarkupParser(Markup.Format format) {
 		this.format = format;
@@ -26,6 +27,7 @@ public class MarkupParser {
 		rootElement = new MarkupElement();
 		stack = new Stack<MarkupElement>();
 		currentElement = null;
+		lineNumber = 0;
 
 		pushElement(rootElement);
 	}
@@ -43,6 +45,7 @@ public class MarkupParser {
 	private MarkupElement addChildElement(MarkupElement.Type type, String content) {
 		MarkupElement element = currentElement.addChild(type);
 		element.setContent(content);
+		element.setLineNumber(lineNumber);
 		return element;
 	}
 
@@ -178,6 +181,8 @@ public class MarkupParser {
 			codeBlockEnd = "```";
 			separator = "---";
 		}
+
+		lineNumber += 1;
 
 		String condensedLine = line.replace(" ", "");
 		if (currentElement.getType() == MarkupElement.Type.CODE) {

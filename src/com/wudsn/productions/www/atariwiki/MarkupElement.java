@@ -33,6 +33,7 @@ public class MarkupElement {
 	};
 
 	private MarkupElement parent;
+	private int lineNumber;
 	private Type type;
 	private String content;
 	private String url;
@@ -65,6 +66,14 @@ public class MarkupElement {
 		return result;
 	}
 
+	public int getLineNumber() {
+		return lineNumber;
+	}
+	
+	public void setLineNumber(int lineNumber) {
+		this.lineNumber=lineNumber;
+	}
+	
 	public Type getType() {
 		return type;
 	}

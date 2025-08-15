@@ -1,6 +1,6 @@
 package com.wudsn.productions.www.atariwiki;
 
-import static com.wudsn.productions.www.atariwiki.Utilities.log;
+import static com.wudsn.productions.www.atariwiki.Utilities.*;
 import static com.wudsn.productions.www.atariwiki.Utilities.logException;
 
 import java.io.File;
@@ -9,6 +9,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -18,6 +19,18 @@ import com.wudsn.productions.www.atariwiki.MarkupElement.Type;
 
 public class MarkupChecker {
 
+	private static class Issue {
+
+		private MarkupElement element;
+		private IOException exception;
+
+		public Issue(MarkupElement element, IOException exception) {
+			this.element = element;
+			this.exception = exception;
+		}
+
+	}
+
 	private static final String USER_AGENT = "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Mobile Safari/537.36";
 
 	public boolean validateLinks;
@@ -26,17 +39,21 @@ public class MarkupChecker {
 	private File rootFolder;
 	private Map<String, MarkupElement> rootElementsMap;
 	private long issueCount;
+	private Map<String, List<Issue>> issuesMap;
 
 	public MarkupChecker() {
 
 	}
 
-	private void logError(MarkupElement element, IOException ex) {
-		log("ISSUE: " + Long.toString(issueCount));
-		log("ROOT : " + element.getRoot().getURL());
-		log("LINK : " + element.getURL() + " with description '" + element.getContent() + "'");
-		logException(ex);
-		issueCount = issueCount + 1;
+	private void addIssue(MarkupElement element, IOException ex) {
+		Issue issue = new Issue(element, ex);
+		String key = element.getRoot().getURL();
+		List<Issue> issuesList = issuesMap.get(key);
+		if (issuesList == null) {
+			issuesList = new ArrayList<Issue>();
+			issuesMap.put(key, issuesList);
+		}
+		issuesList.add(issue);
 	}
 
 //	private String readContent(HttpURLConnection connection) throws IOException {
@@ -120,6 +137,7 @@ public class MarkupChecker {
 			return rootElementsMap.get(filePath);
 
 		} catch (IOException ex) {
+			logError("Cannot get canonical path for '%s'.", file.getAbsolutePath());
 			logException(ex);
 			return null;
 		}
@@ -132,6 +150,7 @@ public class MarkupChecker {
 			rootElementsMap.put(rootElement.getURL(), rootElement);
 		}
 		issueCount = 0;
+		issuesMap = new TreeMap<String, List<Issue>>();
 		for (MarkupElement rootElement : elements) {
 			rootElement.visit(new MarkupElementVisitor() {
 
@@ -149,13 +168,31 @@ public class MarkupChecker {
 						try {
 							checkLink(element);
 						} catch (IOException ex) {
-							logError(element, ex);
+							addIssue(element, ex);
 						}
 					}
 
 				}
 
 			});
+		}
+
+		logInfo("Found {0} issues in {1} pages.", Long.toString(issueCount), Long.toString(issuesMap.size()));
+		for (String key : issuesMap.keySet()) {
+			List<Issue> issuesList = issuesMap.get(key);
+			String from = key.substring(rootFolder.getAbsolutePath().length() + "\\content\\".length());
+			from = from.replace("\\index.md", ".txt");
+			from = "C:\\jac\\system\\WWW\\Programming\\Repositories\\atariwiki.jsp\\p\\web\\www-data\\jspwiki\\" + from;
+			log("ROOT : " + issuesList.size() + " issues in " + key);
+			log("FROM : " + from);
+
+			for (Issue issue : issuesList) {
+				log("ELEMENT: " + issue.element.getURL() + " with description '" + issue.element.getContent()
+						+ "' in line " + issue.element.getLineNumber());
+				logException(issue.exception);
+			}
+			log("");
+
 		}
 	};
 }

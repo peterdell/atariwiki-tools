@@ -24,6 +24,7 @@ public abstract class Utilities {
 		System.out.flush();
 	}
 
+		
 	public static void logDebug(String message, Object... args) {
 		if (DEBUG) {
 			message = "DEBUG: " + message.formatted(args);
