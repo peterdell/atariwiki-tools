@@ -1,7 +1,6 @@
 package com.wudsn.productions.www.atariwiki;
 
 import static com.wudsn.productions.www.atariwiki.Utilities.*;
-import static com.wudsn.productions.www.atariwiki.Utilities.logException;
 
 import java.io.File;
 import java.io.IOException;
@@ -10,14 +9,29 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.TreeMap;
 
 import com.wudsn.productions.www.atariwiki.MarkupElement.Attachment;
 import com.wudsn.productions.www.atariwiki.MarkupElement.Type;
+import com.wudsn.productions.www.atariwiki.jsp.AtariWikiConverter;
 
 public class MarkupChecker {
+
+	private static class RootElementIssues {
+		MarkupElement rootElement;
+		List<Issue> issuesList;
+
+		public RootElementIssues(MarkupElement rootElement) {
+			this.rootElement = rootElement;
+			issuesList = new ArrayList<Issue>();
+		}
+	}
 
 	private static class Issue {
 
@@ -39,7 +53,7 @@ public class MarkupChecker {
 	private File rootFolder;
 	private Map<String, MarkupElement> rootElementsMap;
 	private long issueCount;
-	private Map<String, List<Issue>> issuesMap;
+	private Map<String, RootElementIssues> issuesMap;
 
 	public MarkupChecker() {
 
@@ -47,13 +61,14 @@ public class MarkupChecker {
 
 	private void addIssue(MarkupElement element, IOException ex) {
 		Issue issue = new Issue(element, ex);
+		MarkupElement rootElement = element.getRoot();
 		String key = element.getRoot().getURL();
-		List<Issue> issuesList = issuesMap.get(key);
-		if (issuesList == null) {
-			issuesList = new ArrayList<Issue>();
-			issuesMap.put(key, issuesList);
+		RootElementIssues rootElementIssues = issuesMap.get(key);
+		if (rootElementIssues == null) {
+			rootElementIssues = new RootElementIssues(rootElement);
+			issuesMap.put(key, rootElementIssues);
 		}
-		issuesList.add(issue);
+		rootElementIssues.issuesList.add(issue);
 		issueCount++;
 	}
 
@@ -143,14 +158,17 @@ public class MarkupChecker {
 		}
 	}
 
-	public void checkConsistency(File rootFolder, List<MarkupElement> elements) {
+	public void checkConsistency(File rootFolder, List<MarkupElement> elements, Logger logger) {
+		logger.logInfo("Checking consistency of %s root elements in folder '%s'.", Integer.toString(elements.size()),
+				rootFolder.getAbsolutePath());
+
 		this.rootFolder = rootFolder;
 		this.rootElementsMap = new TreeMap<String, MarkupElement>();
 		for (MarkupElement rootElement : elements) {
 			rootElementsMap.put(rootElement.getURL(), rootElement);
 		}
 		issueCount = 0;
-		issuesMap = new TreeMap<String, List<Issue>>();
+		issuesMap = new TreeMap<String, RootElementIssues>();
 		for (MarkupElement rootElement : elements) {
 			rootElement.visit(new MarkupElementVisitor() {
 
@@ -177,21 +195,51 @@ public class MarkupChecker {
 			});
 		}
 
-		logInfo("Found %s issues in %s pages.", Long.toString(issueCount), Long.toString(issuesMap.size()));
-		for (String key : issuesMap.keySet()) {
-			List<Issue> issuesList = issuesMap.get(key);
-			String from = key.substring(rootFolder.getAbsolutePath().length() + "\\content\\".length());
-			from = from.replace("\\index.md", ".txt");
-			from = "C:\\jac\\system\\WWW\\Programming\\Repositories\\atariwiki.jsp\\p\\web\\www-data\\jspwiki\\" + from;
-			log("ROOT : " + issuesList.size() + " issues in " + key);
-			log("FROM : " + from);
+		List<RootElementIssues> rootElementIssuesList = new ArrayList<RootElementIssues>();
+		rootElementIssuesList.addAll(issuesMap.values());
+		Collections.sort(rootElementIssuesList, new Comparator<RootElementIssues>() {
 
-			for (Issue issue : issuesList) {
-				log("ELEMENT: " + issue.element.getURL() + " with description '" + issue.element.getContent()
-						+ "' in line " + issue.element.getLineNumber());
-				logException(issue.exception);
+			@Override
+			public int compare(RootElementIssues o1, RootElementIssues o2) {
+				return Integer.compare(o1.issuesList.size(), o2.issuesList.size());
 			}
-			log("");
+		});
+
+		File jspFolder = new File("C:\\\\jac\\\\system\\\\WWW\\\\Programming\\\\Repositories\\\\atariwiki.jsp");
+		Properties cleanNamesMap = null;
+
+		File fromFolder = new File(
+				"C:\\jac\\system\\WWW\\Programming\\Repositories\\atariwiki.jsp\\p\\web\\www-data\\jspwiki\\");
+		try {
+			cleanNamesMap = AtariWikiConverter.loadCleanNamesMap(jspFolder);
+		} catch (IOException ex) {
+			logger.logException(ex);
+		}
+		logger.logInfo("Found %s issues in %s pages at %s.", Long.toString(issueCount), Long.toString(issuesMap.size()),
+				new Date().toString());
+		for (RootElementIssues rootElementIssues : rootElementIssuesList) {
+			String key = rootElementIssues.rootElement.getURL();
+			File file = new File(key);
+			String fileName = file.getParentFile().getName();
+
+			logger.logInfo("ROOT : %d issues in %s", rootElementIssues.issuesList.size(), key);
+			if (cleanNamesMap != null) {
+				for (Map.Entry<Object, Object> entry : cleanNamesMap.entrySet()) {
+					if (entry.getValue().equals(fileName)) {
+						File fromFile = new File(fromFolder, ((String) entry.getKey()) + ".txt");
+						if (file.exists()) {
+							logger.logInfo("FROM : %s", fromFile.getAbsolutePath());
+						}
+					}
+				}
+			}
+
+			for (Issue issue : rootElementIssues.issuesList) {
+				logger.logInfo("ELEMENT: %s with description '%s' in line %d.", issue.element.getURL(),
+						issue.element.getContent(), issue.element.getLineNumber());
+				logger.logException(issue.exception);
+			}
+			logger.newLine();
 
 		}
 	};

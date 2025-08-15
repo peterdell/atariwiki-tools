@@ -6,12 +6,15 @@ import static com.wudsn.productions.www.atariwiki.Utilities.logWarning;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import com.wudsn.productions.www.atariwiki.Markup;
 import com.wudsn.productions.www.atariwiki.Markup.Format;
@@ -20,6 +23,8 @@ import com.wudsn.productions.www.atariwiki.MarkupIO;
 import com.wudsn.productions.www.atariwiki.Utilities;
 
 public class AtariWikiConverter {
+
+	private static Properties cleanNamesMap = new Properties();
 
 	// JSP Wiki handling for Attachments
 	private static void convertJSPAttachmentFolder(File inputFileAttachmentsFolder, File outputFileAttachmentsFolder) {
@@ -167,10 +172,34 @@ public class AtariWikiConverter {
 			Utilities.logException(ex);
 			return;
 		}
+
+		saveCleanNamesMap(inputFolder);
+	}
+	
+	private static File getMapFile(File inputFolder) {
+		return new File(inputFolder, "AtariWikiConverter.properties");
 	}
 
-	public static String cleanFileName(String name) {
-		name = Utilities.decodeURL(name);
+	public static Properties loadCleanNamesMap(File inputFolder) throws IOException {
+		Properties properties = new Properties();
+		File mapFile = getMapFile(inputFolder);
+		Utilities.logInfo("Loading clean names map from '%s'.", mapFile.getAbsolutePath());
+		properties.loadFromXML(new FileInputStream(mapFile));
+		return properties;
+	}
+
+	private void saveCleanNamesMap(File inputFolder) {
+		try {
+			File mapFile = getMapFile(inputFolder);
+			Utilities.logInfo("Storing clean names map to '%s'.", mapFile.getAbsolutePath());
+			cleanNamesMap.storeToXML(new FileOutputStream(mapFile), "");
+		} catch (IOException ex) {
+			logException(ex);
+		}
+	}
+
+	public static String cleanFileName(String fileName) {
+		String name = Utilities.decodeURL(fileName);
 		name = name.replace("&", "and");
 		name = name.replace(" ", "_");
 		name = name.replace(",", "");
@@ -196,6 +225,9 @@ public class AtariWikiConverter {
 			if (Markup.FILE_NAME_CHARACTERS.indexOf(c) < 0) {
 				logWarning("Invalid character '" + c + "' at position " + i + " in '" + name + "'.");
 			}
+		}
+		if (!name.equals(fileName)) {
+			cleanNamesMap.put(fileName, name);
 		}
 		return name;
 	}

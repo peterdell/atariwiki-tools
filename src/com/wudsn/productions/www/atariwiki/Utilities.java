@@ -10,6 +10,8 @@ public abstract class Utilities {
 	};
 
 	public static boolean DEBUG = false;
+	
+	private static final Logger consoleLogger=new PrintStreamLogger(System.out, System.err);
 
 	public static String decodeURL(String url) {
 		return URLDecoder.decode(url, StandardCharsets.UTF_8);
@@ -33,31 +35,21 @@ public abstract class Utilities {
 	}
 
 	public static void logInfo(String message, Object... args) {
-		message = "INFO: " + message.formatted(args);
-		log(message);
+		consoleLogger.logInfo(message, args);
 	}
 
 	public static void logWarning(String message, Object... args) {
-		message = "WARNING: " + message.formatted(args);
-		System.err.println(message);
-		System.err.flush();
+		consoleLogger.logWarning(message, args);
+
 	}
 
 	public static void logError(String message, Object... args) {
-		message = "ERROR: " + message.formatted(args);
-		System.err.println(message);
-		System.err.flush();
+		consoleLogger.logError(message, args);
 	}
 
 	public static void logException(Exception exception) {
-		logError("%s", exception.getMessage());
-		Throwable cause = exception.getCause();
-		while (cause != null) {
-			logError("CAUSE: %s", cause.getMessage());
+		consoleLogger.logException(exception);
 
-			cause = cause.getCause();
-		}
-		// System.exit(1);
 	}
 
 }

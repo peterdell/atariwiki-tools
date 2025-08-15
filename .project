@@ -14,4 +14,11 @@
 	<natures>
 		<nature>org.eclipse.jdt.core.javanature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>AtariWikiChecker.log</name>
+			<type>1</type>
+			<location>C:/jac/system/WWW/Programming/Repositories/atariwiki/AtariWikiChecker.log</location>
+		</link>
+	</linkedResources>
 </projectDescription>

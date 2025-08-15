@@ -5,7 +5,9 @@ import static com.wudsn.productions.www.atariwiki.Utilities.logException;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -101,9 +103,19 @@ public class AtariWikiChecker {
 		MarkupChecker checker = new MarkupChecker();
 		checker.validateLinks = true;
 		checker.validateHttpLinks = false;
-		
-		log("Checking consistency of " + rootElements.size() + " root elements.");
-		checker.checkConsistency(rootFolder, rootElements);
+
+		File logFile = new File(rootFolder, "AtariWikiChecker.log");
+		Utilities.logInfo("Writing log to '%s'.", logFile.getAbsolutePath());
+		PrintStream printSteam;
+		try {
+			printSteam = new PrintStream(logFile);
+
+			PrintStreamLogger logger = new PrintStreamLogger(printSteam, printSteam);
+			checker.checkConsistency(rootFolder, rootElements, logger);
+			printSteam.close();
+		} catch (FileNotFoundException ex) {
+			logException(ex);
+		}
 	}
 
 	public static void main(String[] args) {
