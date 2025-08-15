@@ -3,12 +3,15 @@ package com.wudsn.productions.www.atariwiki;
 import static com.wudsn.productions.www.atariwiki.Utilities.log;
 import static com.wudsn.productions.www.atariwiki.Utilities.logException;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -89,6 +92,18 @@ public class AtariWikiChecker {
 		}
 	}
 
+	private String readContent(HttpURLConnection connection) throws IOException {
+		BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+		String inputLine;
+		StringBuilder response = new StringBuilder();
+
+		while ((inputLine = in.readLine()) != null) {
+			response.append(inputLine);
+		}
+		in.close();
+		return response.toString();
+	}
+
 	private void checkLink(MarkupElement element) throws IOException {
 		String url = element.getURL();
 		if (url.contains("://")) {
@@ -99,16 +114,34 @@ public class AtariWikiChecker {
 				throw new IOException("Malformed URL", ex);
 			}
 
-			Object content;
+			URLConnection connection;
 			try {
 
-				content = urlObject.getContent();
-				if (content instanceof HttpURLConnection) {
-					HttpURLConnection urlConnection = (HttpURLConnection) content;
-					urlConnection.disconnect();
-				}
+				connection = urlObject.openConnection();
+
 			} catch (IOException ex) {
 				throw new IOException("Cannot read content from URL", ex);
+			}
+			if (connection instanceof HttpURLConnection) {
+				HttpURLConnection httpURLConnection = (HttpURLConnection) connection;
+				httpURLConnection.setRequestMethod("GET");
+				httpURLConnection.setRequestProperty("Accept-Language" , "en");
+				httpURLConnection.connect();
+				int code = httpURLConnection.getResponseCode();
+				if (code != HttpURLConnection.HTTP_OK) {
+					switch (code) {
+					case HttpURLConnection.HTTP_MOVED_PERM:
+					case HttpURLConnection.HTTP_MOVED_TEMP: {
+						String content = httpURLConnection.getHeaderField("Location");
+
+						throw new IOException("Server URL has changed to '" + content + "'.");
+					}
+					default:
+						throw new IOException("Server returned response code " + code + " - "
+								+ httpURLConnection.getResponseMessage() + ".");
+					}
+				}
+				httpURLConnection.disconnect();
 			}
 		}
 	}
