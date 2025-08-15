@@ -1,6 +1,5 @@
 package com.wudsn.productions.www.atariwiki;
 
-import static com.wudsn.productions.www.atariwiki.Utilities.log;
 import static com.wudsn.productions.www.atariwiki.Utilities.logException;
 
 import java.io.File;
@@ -86,13 +85,13 @@ public class AtariWikiChecker {
 		}
 	}
 
-	public void run(String[] args) {
+	public void run(File baseFolder) {
 
-		File rootFolder = new File("C:\\jac\\system\\WWW\\Programming\\Repositories\\atariwiki");
+		File rootFolder = new File(baseFolder, "atariwiki");
 
 //		final String filterPattern = ""; // "EASMD"; // "Teil10";
 		if (!rootFolder.exists()) {
-			Utilities.logError("Root folder %s' does not exist.", rootFolder.getAbsolutePath());
+			Utilities.logError("Markdown root folder %s' does not exist.", rootFolder.getAbsolutePath());
 			return;
 		}
 		Utilities.logInfo("Processing root folder '%s'.", rootFolder.getAbsolutePath());
@@ -117,11 +116,4 @@ public class AtariWikiChecker {
 			logException(ex);
 		}
 	}
-
-	public static void main(String[] args) {
-		new AtariWikiChecker().run(args);
-		log("Done.");
-
-	}
-
 }

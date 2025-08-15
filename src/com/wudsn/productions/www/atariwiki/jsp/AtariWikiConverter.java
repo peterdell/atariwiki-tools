@@ -1,6 +1,5 @@
 package com.wudsn.productions.www.atariwiki.jsp;
 
-import static com.wudsn.productions.www.atariwiki.Utilities.log;
 import static com.wudsn.productions.www.atariwiki.Utilities.logException;
 import static com.wudsn.productions.www.atariwiki.Utilities.logWarning;
 
@@ -96,9 +95,10 @@ public class AtariWikiConverter {
 		return rootElement;
 	}
 
-	public void run(String[] args) {
+	public void run(File baseFolder) {
 
-		File baseFolder = new File("C:\\jac\\system\\WWW\\Programming\\Repositories");
+
+
 		File inputFolder = new File(baseFolder, "atariwiki.jsp");
 		File textInputFolder = new File(inputFolder, "p/web/www-data/jspwiki");
 		File attachmentInputFolder = new File(inputFolder, "jspwiki/Attachments");
@@ -175,7 +175,7 @@ public class AtariWikiConverter {
 
 		saveCleanNamesMap(inputFolder);
 	}
-	
+
 	private static File getMapFile(File inputFolder) {
 		return new File(inputFolder, "AtariWikiConverter.properties");
 	}
@@ -188,7 +188,7 @@ public class AtariWikiConverter {
 		return properties;
 	}
 
-	private void saveCleanNamesMap(File inputFolder) {
+	private static void saveCleanNamesMap(File inputFolder) {
 		try {
 			File mapFile = getMapFile(inputFolder);
 			Utilities.logInfo("Storing clean names map to '%s'.", mapFile.getAbsolutePath());
@@ -232,10 +232,6 @@ public class AtariWikiConverter {
 		return name;
 	}
 
-	public static void main(String[] args) {
-		new AtariWikiConverter().run(args);
-		log("Done.");
 
-	}
 
 }

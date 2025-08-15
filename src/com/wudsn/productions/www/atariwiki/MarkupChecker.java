@@ -1,7 +1,5 @@
 package com.wudsn.productions.www.atariwiki;
 
-import static com.wudsn.productions.www.atariwiki.Utilities.*;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
