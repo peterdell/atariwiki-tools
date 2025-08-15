@@ -22,6 +22,8 @@ public class AtariWikiChecker {
 
 	private FileFilter folderFilter;
 
+	private static final String USER_AGENT="Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Mobile Safari/537.36";
+	
 	public AtariWikiChecker() {
 		folderFilter = new FileFilter() {
 
@@ -125,6 +127,7 @@ public class AtariWikiChecker {
 			if (connection instanceof HttpURLConnection) {
 				HttpURLConnection httpURLConnection = (HttpURLConnection) connection;
 				httpURLConnection.setRequestMethod("GET");
+				httpURLConnection.setRequestProperty("User-Agent" , USER_AGENT);
 				httpURLConnection.setRequestProperty("Accept-Language" , "en");
 				httpURLConnection.connect();
 				int code = httpURLConnection.getResponseCode();
