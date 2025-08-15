@@ -94,7 +94,7 @@ public class MarkupParser {
 		StringBuilder builder = new StringBuilder();
 		for (int i = 0; i < content.length(); i++) {
 			String prefix = content.substring(i);
-			if (prefix.startsWith("~[") || prefix.startsWith("[")) {
+			if (prefix.startsWith("~[") || prefix.startsWith("[[") || prefix.startsWith("[")) {
 				int endIndex = prefix.indexOf("]");
 				if (endIndex > 1) {
 					if (format == Format.MD) {
@@ -111,7 +111,7 @@ public class MarkupParser {
 					} else {
 
 						// Escaped?
-						if (prefix.startsWith("~")) {
+						if (prefix.startsWith("~") || prefix.startsWith("[[")) {
 							String text = prefix.substring(2, endIndex);
 							builder.append("\\[").append(text).append("\\]");
 

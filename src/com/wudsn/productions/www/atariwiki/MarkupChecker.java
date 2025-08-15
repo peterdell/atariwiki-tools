@@ -54,6 +54,7 @@ public class MarkupChecker {
 			issuesMap.put(key, issuesList);
 		}
 		issuesList.add(issue);
+		issueCount++;
 	}
 
 //	private String readContent(HttpURLConnection connection) throws IOException {
@@ -130,16 +131,15 @@ public class MarkupChecker {
 		}
 	}
 
-	private MarkupElement getElementForRelativePath(File rootElementFile, String url) {
+	private MarkupElement getElementForRelativePath(File rootElementFile, String url) throws IOException {
 		File file = new File(rootElementFile.getParentFile(), url);
 		try {
 			String filePath = file.getCanonicalPath();
 			return rootElementsMap.get(filePath);
 
 		} catch (IOException ex) {
-			logError("Cannot get canonical path for '%s'.", file.getAbsolutePath());
-			logException(ex);
-			return null;
+			throw new IOException(String.format("Cannot get canonical path for absolute path '%s' of URL '%s'.",
+					file.getAbsolutePath(), url), ex);
 		}
 	}
 
@@ -177,7 +177,7 @@ public class MarkupChecker {
 			});
 		}
 
-		logInfo("Found {0} issues in {1} pages.", Long.toString(issueCount), Long.toString(issuesMap.size()));
+		logInfo("Found %s issues in %s pages.", Long.toString(issueCount), Long.toString(issuesMap.size()));
 		for (String key : issuesMap.keySet()) {
 			List<Issue> issuesList = issuesMap.get(key);
 			String from = key.substring(rootFolder.getAbsolutePath().length() + "\\content\\".length());
