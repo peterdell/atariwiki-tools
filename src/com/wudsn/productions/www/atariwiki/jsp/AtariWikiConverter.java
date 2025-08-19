@@ -60,14 +60,28 @@ public class AtariWikiConverter {
 							fileName, folder.getAbsolutePath(), targetFilePath.toString());
 					try {
 						outputFileAttachmentsFolder.mkdir();
-						Files.copy(new File(folder, versionName).toPath(), targetFilePath,
-								StandardCopyOption.REPLACE_EXISTING);
+						Path sourcePath = new File(folder, versionName).toPath();
+						copyFile(sourcePath, targetFilePath);
 					} catch (IOException ex) {
 						logException(ex);
 					}
 				}
 			}
 		}
+	}
+
+	private static void copyFile(Path sourcePath, Path targetFilePath) throws IOException {
+		File sourceFile = sourcePath.toFile();
+		File targetFile = targetFilePath.toFile();
+		if (!sourceFile.exists() || !sourceFile.isFile()) {
+			return;
+		}
+		if (targetFile.exists() && targetFile.isFile() && targetFile.length() == sourceFile.length()
+				&& targetFile.lastModified() == sourceFile.lastModified()) {
+			Utilities.logDebug("File copy skipp because file size and date are identical.");
+			return;
+		}
+		Files.copy(sourcePath, targetFilePath, StandardCopyOption.REPLACE_EXISTING);
 	}
 
 	private MarkupElement convertJSPFile(File inputFile, String readableName, File inputFileAttachmentsFolder,
@@ -96,8 +110,6 @@ public class AtariWikiConverter {
 	}
 
 	public void run(File baseFolder) {
-
-
 
 		File inputFolder = new File(baseFolder, "atariwiki.jsp");
 		File textInputFolder = new File(inputFolder, "p/web/www-data/jspwiki");
@@ -231,7 +243,5 @@ public class AtariWikiConverter {
 		}
 		return name;
 	}
-
-
 
 }
